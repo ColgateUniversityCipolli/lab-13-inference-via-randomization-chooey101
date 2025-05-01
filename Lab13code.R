@@ -173,3 +173,35 @@ p_further_rand <- mean(abs(rand.t.further) >= abs(t_further))
 p_diff_rand    <- mean(abs(rand.t.diff)    >= abs(t_diff))
 
 #3c: Compute confidence intervals
+
+#This function will be used within the next function to calculate the p value for each iteration of the loop
+rand_p_val <- function(x, mu0) {
+  n    <- length(x)
+  s    <- sd(x)
+  x0   <- x - mu0
+  t_obs <- abs(mean(x) - mu0) / (s / sqrt(n))
+  rand_t <- replicate(R, {
+    signs <- sample(c(-1,1), n, replace = TRUE)
+    mean(signs * x0) / (s / sqrt(n))
+  })
+  mean(abs(rand_t) >= t_obs)
+}
+#Loops until it finds the first p value that is less than .05 for both upper and lower bounds
+rand_ci <- function(x) {
+  m   <- mean(x)
+  lower <- m
+  while(rand_p_val(x, lower) < 0.05) {
+    lower <- lower - step
+  }
+  upper <- m
+  while(rand_p_val(x, upper) < 0.05) {
+    upper <- upper + step
+  }
+  c(lower = lower, upper = upper)
+}
+
+ci_closer  <- rand_ci(closer)
+ci_further <- rand_ci(further)
+ci_diff    <- rand_ci(difference)
+
+
