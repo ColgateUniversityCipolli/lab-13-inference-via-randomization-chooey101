@@ -16,9 +16,12 @@
 \begin{document}
 <<echo=F, message=F, warning=F>>=
 library(tidyverse)
+library(patchwork)
+library(e1071)
 @
 
 \begin{enumerate}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Question 1
@@ -37,10 +40,46 @@ for the the further observations.
   where $f_Z(\cdot)$ and $F_Z(\cdot)$ are the Gaussian PDF and CDF and skew is the
   skewness of the data. What is the potential error in the computation of the 
   $p$-value when testing $H_0: \mu_X=0; H_a: \mu_X<0$ using the zebra finch further data? 
+<<size = "scriptsize" >>=
+finch.data <- read.csv("zebrafinches.csv")
+n = nrow(finch.data)
+further.sum <- finch.data |>
+  summarize(
+    mean = mean(further),
+    sd = sd(further),
+    skew = skewness(further)
+  )
+
+close.t.stat <- t.test(x=finch.data$further, mu = 0, alternative = "less")
+
+t.stat <- close.t.stat$statistic
+
+fZ.at.t <- dnorm(t.stat, mean = 0, sd = 1)
+
+error.val <- ((further.sum$skew)/(sqrt(n)))*(((2*t.stat^2)+1)/6)*fZ.at.t
+@
 
   \item Compute the error for $t$ statistics from -10 to 10 and plot a line
   that shows the error across $t$. Continue to use the skewness and 
   the sample size for the zebra finch further data.
+<<size = "scriptsize">>=
+t.seq <- seq(-10, 10, length.out=1000)
+
+fZ <- dnorm(t.seq, mean = 0, sd = 1)
+
+skew.further <- further.sum$skew
+
+error.seq <- (skew.further / sqrt(n)) *
+  ((2 * t.seq^2 + 1) / 6) *
+  fZ
+
+error.df <- tibble(
+  t     = t.seq,
+  error = error.seq
+)
+error.df
+@
+
 
   \item Suppose we wanted to have a tail probability within 10\% of the desired
   $\alpha=0.05$. Recall we did a left-tailed test using the further data.

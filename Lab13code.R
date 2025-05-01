@@ -61,22 +61,30 @@ closer <- finch.data$closer
 
 n.closer <- length(closer)        
 s.closer <- sd(closer)
+mu.obs      <- mean(closer)
 
-closer.null  <- closer - mean(closer)
 
-R = 10000
+R = 1000
 set.seed(42)
 
+closer.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, R))
+
 #Generate null bootstrap T-stats
-resamples.null.closer <- replicate(R, {
-  x.bar <- sample(closer.null, size = n.closer, replace = TRUE)
-  mean(x.bar)/(s.closer/sqrt(n.closer))
-})
+ for (i in 1:R) {
+  x.star   <- sample(closer, size = n.closer, replace = TRUE)
+  closer.resamples$xbar[i] <- mean(x.star)
+  closer.resamples$sd[i] <- sd(x.star)
+  closer.resamples$t.stat[i] <- (closer.resamples$xbar[i]-mu.obs) / (closer.resamples$sd[i] / sqrt(n.closer))
+}
 
 ##2b: Compute Bootstrap P-values
 
 further <- finch.data$further
 difference <- further - closer
+
+
+further.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, R))
+diff.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, R))
 
 # observed T‑statistics
 t_closer    <- t.test(closer, mu = 0, alternative = "less")$statistic
@@ -91,20 +99,24 @@ p_diff_tt   <- t.test(difference, mu = 0, alternative = "less")$p.value
 #Bootstrap T-stats for further and difference vals 
 n.further = length(further)
 n.diff = length(difference)
-further.null = further - mean(further)
-diff.null = difference - mean(difference)
-sd.further = sd(further)
-sd.diff = sd(difference)
+mu.further = mean(further)
+mu.diff = mean(difference)
 
-resamples.null.further <- replicate(R, {
-  x.bar <- sample(further.null, size = n.further, replace = TRUE)
-  mean(x.bar)/(sd.further/sqrt(n.further))
-})
+for (i in 1:R) {
+  x.star   <- sample(further, size = n.further, replace = TRUE)
+  further.resamples$xbar[i] <- mean(x.star)
+  further.resamples$sd[i] <- sd(x.star)
+  further.resamples$t.stat[i] <- (further.resamples$xbar[i]-mu.further) / (further.resamples$sd[i] / sqrt(n.further))
+}
 
-resamples.null.diff <- replicate(R, {
-  x.bar <- sample(diff.null, size = n.diff, replace = TRUE)
-  mean(x.bar)/(sd.diff/sqrt(n.diff))
-})
+for (i in 1:R) {
+  x.star   <- sample(difference, size = n.diff, replace = TRUE)
+  diff.resamples$xbar[i] <- mean(x.star)
+  diff.resamples$sd[i] <- sd(x.star)
+  diff.resamples$t.stat[i] <- (diff.resamples$xbar[i]-mu.diff) / (diff.resamples$sd[i] / sqrt(n.diff))
+}
+
+##Remember to fix bootstrap statistics
 
 #Bootstrapped p-vals
 p_closer_boot  <- mean(abs(resamples.null.closer)  >= abs(t_closer))
