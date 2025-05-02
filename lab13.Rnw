@@ -63,7 +63,7 @@ error.val
   \item Compute the error for $t$ statistics from -10 to 10 and plot a line
   that shows the error across $t$. Continue to use the skewness and 
   the sample size for the zebra finch further data.
-<<size = "scriptsize">>=
+  <<size = "scriptsize">>=
 t.seq <- seq(-10, 10, length.out=1000)
 
 fZ <- dnorm(t.seq, mean = 0, sd = 1)
@@ -80,7 +80,12 @@ error.df <- tibble(
 )
 error.df
 @
-
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{errorplot.pdf}
+\label{plot1}
+\end{center}
+\end{figure}
 
   \item Suppose we wanted to have a tail probability within 10\% of the desired
   $\alpha=0.05$. Recall we did a left-tailed test using the further data.
@@ -142,6 +147,12 @@ diff.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, R)
   closer.resamples$t.stat[i] <- (closer.resamples$xbar[i]-mu.obs) / (closer.resamples$sd[i] / sqrt(n.closer))
  }
 @
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{Bootstapgraph.pdf}
+\label{plot2}
+\end{center}
+\end{figure}
   \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
   How do these compare to the $t$-test $p$-values? - \textbf{The p-values recorded from preforming t-tests for the closer and difference data yielded were very small while the value for the further data was quite high, which makes sense as we are evaluating the left tail of the data. Furthermore, all of the bootstrapped p-values were recorded as $0$, suggesting that either these values were very small or their measurements were inaccurate.}
   <<size="scriptsize">>=
@@ -176,16 +187,17 @@ for (i in 1:R) {
   diff.resamples$sd[i] <- sd(x.star)
   diff.resamples$t.stat[i] <- (diff.resamples$xbar[i]-mu.diff) / (diff.resamples$sd[i] / sqrt(n.diff))
 
-  p_closer_boot  <- mean(abs(closer.resamples$t.stat)  >= abs(t_closer))
+ 
+}
+ p_closer_boot  <- mean(abs(closer.resamples$t.stat)  >= abs(t_closer))
 p_further_boot <- mean(abs(further.resamples$t.stat) >= abs(t_further))
 p_diff_boot    <- mean(abs(diff.resamples$t.stat)    >= abs(t_diff))
 
 p_vals <- tibble(bootstrap_p_vals=(c(p_closer_boot, p_further_boot, p_diff_boot)),
        t_test_p_vals=c(p_closer_tt, p_further_tt, p_diff_tt))  
 p_vals
-}
 @
-    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? - textbf{The 5$^{th}$ percentile of the shifted resamples under the null hypothesis were approximately $-1.89$ for the closer data, $-1.46$ for the further data, and $-1.64$ for the difference data.}
+    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? - \textbf{The 5$^{th}$ percentile of the shifted resamples under the null hypothesis were approximately $-1.89$ for the closer data, $-1.46$ for the further data, and $-1.64$ for the difference data.}
 <<size="scriptsize">>=
   t05_closer_boot  <- quantile(closer.resamples$t.stat,  probs = 0.05)
 t05_further_boot <- quantile(further.resamples$t.stat, probs = 0.05)

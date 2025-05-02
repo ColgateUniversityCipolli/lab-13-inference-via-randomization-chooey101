@@ -127,12 +127,12 @@ for the the further observations.
 \hldef{skew.further} \hlkwb{<-} \hldef{further.sum}\hlopt{$}\hldef{skew}
 
 \hldef{error.seq} \hlkwb{<-} \hldef{(skew.further} \hlopt{/} \hlkwd{sqrt}\hldef{(n))} \hlopt{*}
-  \hldef{((}\hlnum{2} \hlopt{*} \hldef{t.seq}\hlopt{^}\hlnum{2} \hlopt{+} \hlnum{1}\hldef{)} \hlopt{/} \hlnum{6}\hldef{)} \hlopt{*}
-  \hldef{fZ}
+\hldef{((}\hlnum{2} \hlopt{*} \hldef{t.seq}\hlopt{^}\hlnum{2} \hlopt{+} \hlnum{1}\hldef{)} \hlopt{/} \hlnum{6}\hldef{)} \hlopt{*}
+\hldef{fZ}
 
 \hldef{error.df} \hlkwb{<-} \hlkwd{tibble}\hldef{(}
-  \hlkwc{t}     \hldef{= t.seq,}
-  \hlkwc{error} \hldef{= error.seq}
+\hlkwc{t}     \hldef{= t.seq,}
+\hlkwc{error} \hldef{= error.seq}
 \hldef{)}
 \hldef{error.df}
 \end{alltt}
@@ -154,7 +154,12 @@ for the the further observations.
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
-
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{errorplot.pdf}
+\label{plot1}
+\end{center}
+\end{figure}
 
   \item Suppose we wanted to have a tail probability within 10\% of the desired
   $\alpha=0.05$. Recall we did a left-tailed test using the further data.
@@ -227,6 +232,12 @@ sampling distribution of the $T$ statistic:
 \end{alltt}
 \end{kframe}
 \end{knitrout}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.7]{Bootstapgraph.pdf}
+\label{plot2}
+\end{center}
+\end{figure}
   \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
   How do these compare to the $t$-test $p$-values? - \textbf{The p-values recorded from preforming t-tests for the closer and difference data yielded were very small while the value for the further data was quite high, which makes sense as we are evaluating the left tail of the data. Furthermore, all of the bootstrapped p-values were recorded as $0$, suggesting that either these values were very small or their measurements were inaccurate.}
 \begin{knitrout}\scriptsize
@@ -261,18 +272,27 @@ sampling distribution of the $T$ statistic:
 \hldef{diff.resamples}\hlopt{$}\hldef{sd[i]} \hlkwb{<-} \hlkwd{sd}\hldef{(x.star)}
 \hldef{diff.resamples}\hlopt{$}\hldef{t.stat[i]} \hlkwb{<-} \hldef{(diff.resamples}\hlopt{$}\hldef{xbar[i]}\hlopt{-}\hldef{mu.diff)} \hlopt{/} \hldef{(diff.resamples}\hlopt{$}\hldef{sd[i]} \hlopt{/} \hlkwd{sqrt}\hldef{(n.diff))}
 
-\hldef{p_closer_boot}  \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(closer.resamples}\hlopt{$}\hldef{t.stat)}  \hlopt{>=} \hlkwd{abs}\hldef{(t_closer))}
+
+\hldef{\}}
+ \hldef{p_closer_boot}  \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(closer.resamples}\hlopt{$}\hldef{t.stat)}  \hlopt{>=} \hlkwd{abs}\hldef{(t_closer))}
 \hldef{p_further_boot} \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(further.resamples}\hlopt{$}\hldef{t.stat)} \hlopt{>=} \hlkwd{abs}\hldef{(t_further))}
 \hldef{p_diff_boot}    \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(diff.resamples}\hlopt{$}\hldef{t.stat)}    \hlopt{>=} \hlkwd{abs}\hldef{(t_diff))}
 
 \hldef{p_vals} \hlkwb{<-} \hlkwd{tibble}\hldef{(}\hlkwc{bootstrap_p_vals}\hldef{=(}\hlkwd{c}\hldef{(p_closer_boot, p_further_boot, p_diff_boot)),}
      \hlkwc{t_test_p_vals}\hldef{=}\hlkwd{c}\hldef{(p_closer_tt, p_further_tt, p_diff_tt))}
 \hldef{p_vals}
-\hldef{\}}
 \end{alltt}
+\begin{verbatim}
+## # A tibble: 3 x 2
+##   bootstrap_p_vals t_test_p_vals
+##              <dbl>         <dbl>
+## 1                0 1.00         
+## 2                0 0.0000000259 
+## 3                0 0.00000000518
+\end{verbatim}
 \end{kframe}
 \end{knitrout}
-    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? - textbf{The 5$^{th}$ percentile of the shifted resamples under the null hypothesis were approximately $-1.89$ for the closer data, $-1.46$ for the further data, and $-1.64$ for the difference data.}
+    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? - \textbf{The 5$^{th}$ percentile of the shifted resamples under the null hypothesis were approximately $-1.89$ for the closer data, $-1.46$ for the further data, and $-1.64$ for the difference data.}
 \begin{knitrout}\scriptsize
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
