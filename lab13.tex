@@ -162,7 +162,8 @@ for the the further observations.
   to solve the error formula equal to 10\% of the desired left-tail probability:
   \[0.10 \alpha  \stackrel{set}{=} \underbrace{\frac{\text{skew}}{\sqrt{n}} \frac{(2t^2+1)}{6} f_Z(t)}_{\textrm{error}},\]
   which yields
-  \[ n = \left(\frac{\text{skew}}{6(0.10\alpha)} (2t^2 + 1) f_Z(t)\right)^2.\]
+  \[ n = \left(\frac{\text{skew}}{6(0.10\alpha)} (2t^2 + 1) f_Z(t)\right)^2.\] - \textbf{to have a tail probability within 10\% of the desired
+  $\alpha=0.05$, we would need a tail-probability of $3.26e-07$.}
 \begin{knitrout}\scriptsize
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -171,7 +172,11 @@ for the the further observations.
 \hldef{assumed.fz} \hlkwb{<-} \hlkwd{dnorm}\hldef{(assumed.t)}
 \hldef{skew.t} \hlkwb{<-}
   \hldef{tail.prob} \hlkwb{<-} \hldef{(((skew.further)}\hlopt{/}\hlnum{6}\hlopt{*}\hldef{(}\hlnum{0.10}\hlopt{*}\hldef{alpha))}\hlopt{*}\hldef{((}\hlnum{2}\hlopt{*}\hldef{assumed.t}\hlopt{^}\hlnum{2}\hldef{)}\hlopt{+}\hlnum{1}\hldef{)}\hlopt{*}\hldef{assumed.fz)}\hlopt{^}\hlnum{2}
+\hldef{tail.prob}
 \end{alltt}
+\begin{verbatim}
+## [1] 3.255548e-07
+\end{verbatim}
 \end{kframe}
 \end{knitrout}
 \end{enumerate}
@@ -363,11 +368,112 @@ randomization procedure.
 \begin{enumerate}
 \item Now, consider the zebra finch data. We do not know the generating distributions
 for the closer, further, and difference data, so perform the randomization procedure
-  \item Compute the randomization test $p$-value for each test.
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{closer.null}  \hlkwb{<-} \hldef{closer}    \hlopt{-} \hlkwd{mean}\hldef{(closer)}
+\hldef{further.null} \hlkwb{<-} \hldef{further}   \hlopt{-} \hlkwd{mean}\hldef{(further)}
+\hldef{diff.null}    \hlkwb{<-} \hldef{difference} \hlopt{-} \hlkwd{mean}\hldef{(difference)}
+\hldef{rand.t.closer} \hlkwb{<-} \hlkwd{replicate}\hldef{(R, \{}
+  \hldef{signs} \hlkwb{<-} \hlkwd{sample}\hldef{(}\hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,}\hlnum{1}\hldef{), n.closer,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+  \hlkwd{mean}\hldef{(signs} \hlopt{*} \hldef{closer.null)}  \hlopt{/} \hldef{(s.closer}   \hlopt{/} \hlkwd{sqrt}\hldef{(n.closer))}
+\hldef{\})}
+
+\hldef{rand.t.further} \hlkwb{<-} \hlkwd{replicate}\hldef{(R, \{}
+  \hldef{signs} \hlkwb{<-} \hlkwd{sample}\hldef{(}\hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,}\hlnum{1}\hldef{), n.further,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+  \hlkwd{mean}\hldef{(signs} \hlopt{*} \hldef{further.null)} \hlopt{/} \hldef{(sd.further} \hlopt{/} \hlkwd{sqrt}\hldef{(n.further))}
+\hldef{\})}
+
+\hldef{rand.t.diff} \hlkwb{<-} \hlkwd{replicate}\hldef{(R, \{}
+  \hldef{signs} \hlkwb{<-} \hlkwd{sample}\hldef{(}\hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,}\hlnum{1}\hldef{), n.diff,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+  \hlkwd{mean}\hldef{(signs} \hlopt{*} \hldef{diff.null)}    \hlopt{/} \hldef{(sd.diff}    \hlopt{/} \hlkwd{sqrt}\hldef{(n.diff))}
+\hldef{\})}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\item Compute the randomization test $p$-value for each test.
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{p_closer_rand}  \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(rand.t.closer)}  \hlopt{>=} \hlkwd{abs}\hldef{(t_closer))}
+\hldef{p_further_rand} \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(rand.t.further)} \hlopt{>=} \hlkwd{abs}\hldef{(t_further))}
+\hldef{p_diff_rand}    \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(rand.t.diff)}    \hlopt{>=} \hlkwd{abs}\hldef{(t_diff))}
+\hldef{p_closer_rand}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\begin{alltt}
+\hldef{p_further_rand}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\begin{alltt}
+\hldef{p_diff_rand}
+\end{alltt}
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
   \item Compute the randomization confidence interval by iterating over values of $\mu_0$.\\
   \textbf{Hint:} You can ``search" for the lower bound from $Q_1$ and subtracting by 0.0001, 
   and the upper bound using $Q_3$ and increasing by 0.0001. You will continue until you find 
   the first value for which the two-sided $p$-value is greater than or equal to 0.05.
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{rand_p_val} \hlkwb{<-} \hlkwa{function}\hldef{(}\hlkwc{x}\hldef{,} \hlkwc{mu0}\hldef{) \{}
+  \hldef{n}    \hlkwb{<-} \hlkwd{length}\hldef{(x)}
+  \hldef{s}    \hlkwb{<-} \hlkwd{sd}\hldef{(x)}
+  \hldef{x0}   \hlkwb{<-} \hldef{x} \hlopt{-} \hldef{mu0}
+  \hldef{t_obs} \hlkwb{<-} \hlkwd{abs}\hldef{(}\hlkwd{mean}\hldef{(x)} \hlopt{-} \hldef{mu0)} \hlopt{/} \hldef{(s} \hlopt{/} \hlkwd{sqrt}\hldef{(n))}
+  \hldef{rand_t} \hlkwb{<-} \hlkwd{replicate}\hldef{(R, \{}
+    \hldef{signs} \hlkwb{<-} \hlkwd{sample}\hldef{(}\hlkwd{c}\hldef{(}\hlopt{-}\hlnum{1}\hldef{,}\hlnum{1}\hldef{), n,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+    \hlkwd{mean}\hldef{(signs} \hlopt{*} \hldef{x0)} \hlopt{/} \hldef{(s} \hlopt{/} \hlkwd{sqrt}\hldef{(n))}
+  \hldef{\})}
+  \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(rand_t)} \hlopt{>=} \hldef{t_obs)}
+\hldef{\}}
+\hlcom{#Loops until it finds the first p value that is less than .05 for both upper and lower bounds}
+\hldef{rand_ci} \hlkwb{<-} \hlkwa{function}\hldef{(}\hlkwc{x}\hldef{) \{}
+  \hldef{m}   \hlkwb{<-} \hlkwd{mean}\hldef{(x)}
+  \hldef{lower} \hlkwb{<-} \hldef{m}
+  \hlkwa{while}\hldef{(}\hlkwd{rand_p_val}\hldef{(x, lower)} \hlopt{<} \hlnum{0.05}\hldef{) \{}
+    \hldef{lower} \hlkwb{<-} \hldef{lower} \hlopt{-} \hldef{step}
+  \hldef{\}}
+  \hldef{upper} \hlkwb{<-} \hldef{m}
+  \hlkwa{while}\hldef{(}\hlkwd{rand_p_val}\hldef{(x, upper)} \hlopt{<} \hlnum{0.05}\hldef{) \{}
+    \hldef{upper} \hlkwb{<-} \hldef{upper} \hlopt{+} \hldef{step}
+  \hldef{\}}
+  \hlkwd{c}\hldef{(}\hlkwc{lower} \hldef{= lower,} \hlkwc{upper} \hldef{= upper)}
+\hldef{\}}
+
+\hldef{ci_closer_rand}  \hlkwb{<-} \hlkwd{rand_ci}\hldef{(closer)}
+\hldef{ci_further_rand} \hlkwb{<-} \hlkwd{rand_ci}\hldef{(further)}
+\hldef{ci_diff_rand}    \hlkwb{<-} \hlkwd{rand_ci}\hldef{(difference)}
+\hldef{ci_closer_rand}
+\end{alltt}
+\begin{verbatim}
+##     lower     upper 
+## 0.1562231 0.1562231
+\end{verbatim}
+\begin{alltt}
+\hldef{ci_further_rand}
+\end{alltt}
+\begin{verbatim}
+##      lower      upper 
+## -0.2027244 -0.2027244
+\end{verbatim}
+\begin{alltt}
+\hldef{ci_diff_rand}
+\end{alltt}
+\begin{verbatim}
+##      lower      upper 
+## -0.3589475 -0.3589475
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

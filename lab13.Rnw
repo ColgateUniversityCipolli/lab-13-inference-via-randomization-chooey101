@@ -246,11 +246,71 @@ randomization procedure.
 \begin{enumerate}
 \item Now, consider the zebra finch data. We do not know the generating distributions
 for the closer, further, and difference data, so perform the randomization procedure
-  \item Compute the randomization test $p$-value for each test.
+<<size="scriptsize">>=
+closer.null  <- closer    - mean(closer)
+further.null <- further   - mean(further)
+diff.null    <- difference - mean(difference)
+rand.t.closer <- replicate(R, {
+  signs <- sample(c(-1,1), n.closer, replace = TRUE)
+  mean(signs * closer.null)  / (s.closer   / sqrt(n.closer))
+})
+
+rand.t.further <- replicate(R, {
+  signs <- sample(c(-1,1), n.further, replace = TRUE)
+  mean(signs * further.null) / (sd.further / sqrt(n.further))
+})
+
+rand.t.diff <- replicate(R, {
+  signs <- sample(c(-1,1), n.diff, replace = TRUE)
+  mean(signs * diff.null)    / (sd.diff    / sqrt(n.diff))
+})
+@
+\item Compute the randomization test $p$-value for each test.
+<<size="scriptsize">>=
+p_closer_rand  <- mean(abs(rand.t.closer)  >= abs(t_closer))
+p_further_rand <- mean(abs(rand.t.further) >= abs(t_further))
+p_diff_rand    <- mean(abs(rand.t.diff)    >= abs(t_diff))
+p_closer_rand
+p_further_rand
+p_diff_rand
+@
   \item Compute the randomization confidence interval by iterating over values of $\mu_0$.\\
   \textbf{Hint:} You can ``search" for the lower bound from $Q_1$ and subtracting by 0.0001, 
   and the upper bound using $Q_3$ and increasing by 0.0001. You will continue until you find 
   the first value for which the two-sided $p$-value is greater than or equal to 0.05.
+<<size="scriptsize">>=
+rand_p_val <- function(x, mu0) {
+  n    <- length(x)
+  s    <- sd(x)
+  x0   <- x - mu0
+  t_obs <- abs(mean(x) - mu0) / (s / sqrt(n))
+  rand_t <- replicate(R, {
+    signs <- sample(c(-1,1), n, replace = TRUE)
+    mean(signs * x0) / (s / sqrt(n))
+  })
+  mean(abs(rand_t) >= t_obs)
+}
+#Loops until it finds the first p value that is less than .05 for both upper and lower bounds
+rand_ci <- function(x) {
+  m   <- mean(x)
+  lower <- m
+  while(rand_p_val(x, lower) < 0.05) {
+    lower <- lower - step
+  }
+  upper <- m
+  while(rand_p_val(x, upper) < 0.05) {
+    upper <- upper + step
+  }
+  c(lower = lower, upper = upper)
+}
+
+ci_closer_rand  <- rand_ci(closer)
+ci_further_rand <- rand_ci(further)
+ci_diff_rand    <- rand_ci(difference)
+ci_closer_rand
+ci_further_rand
+ci_diff_rand
+@
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
