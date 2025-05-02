@@ -75,7 +75,17 @@ closer.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, 
   closer.resamples$xbar[i] <- mean(x.star)
   closer.resamples$sd[i] <- sd(x.star)
   closer.resamples$t.stat[i] <- (closer.resamples$xbar[i]-mu.obs) / (closer.resamples$sd[i] / sqrt(n.closer))
-}
+ }
+
+#Plot approximate null distribution
+closer_dist <- ggplot(closer.resamples, aes(x=t.stat)) +
+  geom_histogram(bins = 30,
+                 fill  = "skyblue",
+                 color = "black") +
+  labs(title = "Approximate distribution of Bootstrapped Closer Data",
+       x     = "t",
+       y     = "Density") +
+  theme_minimal()
 
 ##2b: Compute Bootstrap P-values
 
@@ -119,45 +129,45 @@ for (i in 1:R) {
 ##Remember to fix bootstrap statistics
 
 #Bootstrapped p-vals
-p_closer_boot  <- mean(abs(resamples.null.closer)  >= abs(t_closer))
-p_further_boot <- mean(abs(resamples.null.further) >= abs(t_further))
-p_diff_boot    <- mean(abs(resamples.null.diff)    >= abs(t_diff))
+p_closer_boot  <- mean(abs(closer.resamples$t.stat)  >= abs(t_closer))
+p_further_boot <- mean(abs(further.resamples$t.stat) >= abs(t_further))
+p_diff_boot    <- mean(abs(diff.resamples$t.stat)    >= abs(t_diff))
 
 #Part 2c: Compute 5th percentile under shifted null dist
 
-t05_closer_boot  <- quantile(resamples.null.closer,  probs = 0.05)
-t05_further_boot <- quantile(resamples.null.further, probs = 0.05)
-t05_diff_boot    <- quantile(resamples.null.diff,    probs = 0.05)
+t05_closer_boot  <- quantile(closer.resamples$t.stat,  probs = 0.05)
+t05_further_boot <- quantile(further.resamples$t.stat, probs = 0.05)
+t05_diff_boot    <- quantile(diff.resamples$t.stat,    probs = 0.05)
 
 # Compute theoretical t critical values at α = 0.05 (left tail)
-t05_closer_theo  <- qt(0.05, df = n_closer - 1)
-t05_further_theo <- qt(0.05, df = n_further - 1)
-t05_diff_theo    <- qt(0.05, df = n_diff    - 1)
+t05_closer_theo  <- qt(0.05, df = n.closer - 1)
+t05_further_theo <- qt(0.05, df = n.further - 1)
+t05_diff_theo    <- qt(0.05, df = n.diff    - 1)
 
 #Part 2d: Compute confidence intervals
 probs <- c(0.025, 0.975)
 
 # 1. Closer data
-q_closer        <- quantile(resamples.null.closer,  probs = probs)
+q_closer        <- quantile(closer.resamples$t.stat,  probs = probs)
 ci_closer_boot  <- c(
-  mean(closer) - q_closer[2] * (s_closer / sqrt(n_closer)),
-  mean(closer) - q_closer[1] * (s_closer / sqrt(n_closer))
+  mean(closer) - q_closer[2] * (s.closer / sqrt(n.closer)),
+  mean(closer) - q_closer[1] * (s.closer / sqrt(n.closer))
 )
 tci_closer      <- t.test(closer,  conf.level = 0.95)$conf.int
 
 # 2. Further data
-q_further        <- quantile(resamples.null.further, probs = probs)
+q_further        <- quantile(further.resamples$t.stat, probs = probs)
 ci_further_boot  <- c(
-  mean(further) - q_further[2] * (s_further / sqrt(n_further)),
-  mean(further) - q_further[1] * (s_further / sqrt(n_further))
+  mean(further) - q_further[2] * (sd.further / sqrt(n.further)),
+  mean(further) - q_further[1] * (sd.further / sqrt(n.further))
 )
 tci_further      <- t.test(further, conf.level = 0.95)$conf.int
 
 # 3. Difference data
-q_diff           <- quantile(resamples.null.diff,    probs = probs)
+q_diff           <- quantile(diff.resamples$t.stat,    probs = probs)
 ci_diff_boot     <- c(
-  mean(difference) - q_diff[2] * (s_diff / sqrt(n_diff)),
-  mean(difference) - q_diff[1] * (s_diff / sqrt(n_diff))
+  mean(difference) - q_diff[2] * (sd.diff / sqrt(n.diff)),
+  mean(difference) - q_diff[1] * (sd.diff / sqrt(n.diff))
 )
 tci_diff         <- t.test(difference, conf.level = 0.95)$conf.int
 
@@ -212,8 +222,8 @@ rand_ci <- function(x) {
   c(lower = lower, upper = upper)
 }
 
-ci_closer  <- rand_ci(closer)
-ci_further <- rand_ci(further)
-ci_diff    <- rand_ci(difference)
+ci_closer_rand  <- rand_ci(closer)
+ci_further_rand <- rand_ci(further)
+ci_diff_rand    <- rand_ci(difference)
 
 

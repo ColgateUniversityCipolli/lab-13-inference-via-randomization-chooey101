@@ -105,7 +105,12 @@ for the the further observations.
 \hldef{fZ.at.t} \hlkwb{<-} \hlkwd{dnorm}\hldef{(t.stat,} \hlkwc{mean} \hldef{=} \hlnum{0}\hldef{,} \hlkwc{sd} \hldef{=} \hlnum{1}\hldef{)}
 
 \hldef{error.val} \hlkwb{<-} \hldef{((further.sum}\hlopt{$}\hldef{skew)}\hlopt{/}\hldef{(}\hlkwd{sqrt}\hldef{(n)))}\hlopt{*}\hldef{(((}\hlnum{2}\hlopt{*}\hldef{t.stat}\hlopt{^}\hlnum{2}\hldef{)}\hlopt{+}\hlnum{1}\hldef{)}\hlopt{/}\hlnum{6}\hldef{)}\hlopt{*}\hldef{fZ.at.t}
+\hldef{error.val}
 \end{alltt}
+\begin{verbatim}
+##             t 
+## -1.226006e-13
+\end{verbatim}
 \end{kframe}
 \end{knitrout}
 
@@ -158,6 +163,17 @@ for the the further observations.
   \[0.10 \alpha  \stackrel{set}{=} \underbrace{\frac{\text{skew}}{\sqrt{n}} \frac{(2t^2+1)}{6} f_Z(t)}_{\textrm{error}},\]
   which yields
   \[ n = \left(\frac{\text{skew}}{6(0.10\alpha)} (2t^2 + 1) f_Z(t)\right)^2.\]
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{alpha} \hlkwb{=} \hlnum{0.05}
+\hldef{assumed.t} \hlkwb{<-} \hlkwd{abs}\hldef{(}\hlkwd{qnorm}\hldef{(alpha))}
+\hldef{assumed.fz} \hlkwb{<-} \hlkwd{dnorm}\hldef{(assumed.t)}
+\hldef{skew.t} \hlkwb{<-}
+  \hldef{tail.prob} \hlkwb{<-} \hldef{(((skew.further)}\hlopt{/}\hlnum{6}\hlopt{*}\hldef{(}\hlnum{0.10}\hlopt{*}\hldef{alpha))}\hlopt{*}\hldef{((}\hlnum{2}\hlopt{*}\hldef{assumed.t}\hlopt{^}\hlnum{2}\hldef{)}\hlopt{+}\hlnum{1}\hldef{)}\hlopt{*}\hldef{assumed.fz)}\hlopt{^}\hlnum{2}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -177,12 +193,165 @@ sampling distribution of the $T$ statistic:
   resamples shifted to ensure they are consistent with the null hypotheses at the average 
   (i.e., here ensure the shifted resamples are 0 on average, corresponding
   to $t=0$, for each case). 
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{closer} \hlkwb{<-} \hldef{finch.data}\hlopt{$}\hldef{closer}
+
+\hldef{n.closer} \hlkwb{<-} \hlkwd{length}\hldef{(closer)}
+\hldef{s.closer} \hlkwb{<-} \hlkwd{sd}\hldef{(closer)}
+\hldef{mu.obs}      \hlkwb{<-} \hlkwd{mean}\hldef{(closer)}
+
+\hldef{R} \hlkwb{=} \hlnum{1000}
+\hlkwd{set.seed}\hldef{(}\hlnum{42}\hldef{)}
+
+\hldef{closer.resamples} \hlkwb{<-} \hlkwd{tibble}\hldef{(}\hlkwc{xbar} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R),} \hlkwc{sd} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R),} \hlkwc{t.stat} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R))}
+\hldef{further} \hlkwb{<-} \hldef{finch.data}\hlopt{$}\hldef{further}
+\hldef{difference} \hlkwb{<-} \hldef{further} \hlopt{-} \hldef{closer}
+
+
+\hldef{further.resamples} \hlkwb{<-} \hlkwd{tibble}\hldef{(}\hlkwc{xbar} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R),} \hlkwc{sd} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R),} \hlkwc{t.stat} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R))}
+\hldef{diff.resamples} \hlkwb{<-} \hlkwd{tibble}\hldef{(}\hlkwc{xbar} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R),} \hlkwc{sd} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R),} \hlkwc{t.stat} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{NA}\hldef{, R))}
+\hlcom{#Generate null bootstrap T-stats}
+ \hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+\hldef{x.star}   \hlkwb{<-} \hlkwd{sample}\hldef{(closer,} \hlkwc{size} \hldef{= n.closer,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+\hldef{closer.resamples}\hlopt{$}\hldef{xbar[i]} \hlkwb{<-} \hlkwd{mean}\hldef{(x.star)}
+\hldef{closer.resamples}\hlopt{$}\hldef{sd[i]} \hlkwb{<-} \hlkwd{sd}\hldef{(x.star)}
+\hldef{closer.resamples}\hlopt{$}\hldef{t.stat[i]} \hlkwb{<-} \hldef{(closer.resamples}\hlopt{$}\hldef{xbar[i]}\hlopt{-}\hldef{mu.obs)} \hlopt{/} \hldef{(closer.resamples}\hlopt{$}\hldef{sd[i]} \hlopt{/} \hlkwd{sqrt}\hldef{(n.closer))}
+ \hldef{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
   \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
-  How do these compare to the $t$-test $p$-values?
-    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? 
+  How do these compare to the $t$-test $p$-values? - \textbf{The p-values recorded from preforming t-tests for the closer and difference data yielded were very small while the value for the further data was quite high, which makes sense as we are evaluating the left tail of the data. Furthermore, all of the bootstrapped p-values were recorded as $0$, suggesting that either these values were very small or their measurements were inaccurate.}
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# observed T‑statistics}
+\hldef{t_closer}    \hlkwb{<-} \hlkwd{t.test}\hldef{(closer,} \hlkwc{mu} \hldef{=} \hlnum{0}\hldef{,} \hlkwc{alternative} \hldef{=} \hlsng{"less"}\hldef{)}\hlopt{$}\hldef{statistic}
+\hldef{p_closer_tt} \hlkwb{<-} \hlkwd{t.test}\hldef{(closer,} \hlkwc{mu} \hldef{=} \hlnum{0}\hldef{,} \hlkwc{alternative} \hldef{=} \hlsng{"less"}\hldef{)}\hlopt{$}\hldef{p.value}
+
+\hldef{t_further}    \hlkwb{<-} \hlkwd{t.test}\hldef{(further,} \hlkwc{mu} \hldef{=} \hlnum{0}\hldef{,} \hlkwc{alternative} \hldef{=} \hlsng{"less"}\hldef{)}\hlopt{$}\hldef{statistic}
+\hldef{p_further_tt} \hlkwb{<-} \hlkwd{t.test}\hldef{(further,} \hlkwc{mu} \hldef{=} \hlnum{0}\hldef{,} \hlkwc{alternative} \hldef{=} \hlsng{"less"}\hldef{)}\hlopt{$}\hldef{p.value}
+
+\hldef{t_diff}      \hlkwb{<-} \hlkwd{t.test}\hldef{(difference,} \hlkwc{mu} \hldef{=} \hlnum{0}\hldef{,} \hlkwc{alternative} \hldef{=} \hlsng{"less"}\hldef{)}\hlopt{$}\hldef{statistic}
+\hldef{p_diff_tt}   \hlkwb{<-} \hlkwd{t.test}\hldef{(difference,} \hlkwc{mu} \hldef{=} \hlnum{0}\hldef{,} \hlkwc{alternative} \hldef{=} \hlsng{"less"}\hldef{)}\hlopt{$}\hldef{p.value}
+
+\hlcom{#Bootstrap T-stats for further and difference vals }
+\hldef{n.further} \hlkwb{=} \hlkwd{length}\hldef{(further)}
+\hldef{n.diff} \hlkwb{=} \hlkwd{length}\hldef{(difference)}
+\hldef{mu.further} \hlkwb{=} \hlkwd{mean}\hldef{(further)}
+\hldef{mu.diff} \hlkwb{=} \hlkwd{mean}\hldef{(difference)}
+
+\hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+\hldef{x.star}   \hlkwb{<-} \hlkwd{sample}\hldef{(further,} \hlkwc{size} \hldef{= n.further,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+\hldef{further.resamples}\hlopt{$}\hldef{xbar[i]} \hlkwb{<-} \hlkwd{mean}\hldef{(x.star)}
+\hldef{further.resamples}\hlopt{$}\hldef{sd[i]} \hlkwb{<-} \hlkwd{sd}\hldef{(x.star)}
+\hldef{further.resamples}\hlopt{$}\hldef{t.stat[i]} \hlkwb{<-} \hldef{(further.resamples}\hlopt{$}\hldef{xbar[i]}\hlopt{-}\hldef{mu.further)} \hlopt{/} \hldef{(further.resamples}\hlopt{$}\hldef{sd[i]} \hlopt{/} \hlkwd{sqrt}\hldef{(n.further))}
+\hldef{\}}
+
+\hlkwa{for} \hldef{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hldef{R) \{}
+\hldef{x.star}   \hlkwb{<-} \hlkwd{sample}\hldef{(difference,} \hlkwc{size} \hldef{= n.diff,} \hlkwc{replace} \hldef{=} \hlnum{TRUE}\hldef{)}
+\hldef{diff.resamples}\hlopt{$}\hldef{xbar[i]} \hlkwb{<-} \hlkwd{mean}\hldef{(x.star)}
+\hldef{diff.resamples}\hlopt{$}\hldef{sd[i]} \hlkwb{<-} \hlkwd{sd}\hldef{(x.star)}
+\hldef{diff.resamples}\hlopt{$}\hldef{t.stat[i]} \hlkwb{<-} \hldef{(diff.resamples}\hlopt{$}\hldef{xbar[i]}\hlopt{-}\hldef{mu.diff)} \hlopt{/} \hldef{(diff.resamples}\hlopt{$}\hldef{sd[i]} \hlopt{/} \hlkwd{sqrt}\hldef{(n.diff))}
+
+\hldef{p_closer_boot}  \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(closer.resamples}\hlopt{$}\hldef{t.stat)}  \hlopt{>=} \hlkwd{abs}\hldef{(t_closer))}
+\hldef{p_further_boot} \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(further.resamples}\hlopt{$}\hldef{t.stat)} \hlopt{>=} \hlkwd{abs}\hldef{(t_further))}
+\hldef{p_diff_boot}    \hlkwb{<-} \hlkwd{mean}\hldef{(}\hlkwd{abs}\hldef{(diff.resamples}\hlopt{$}\hldef{t.stat)}    \hlopt{>=} \hlkwd{abs}\hldef{(t_diff))}
+
+\hldef{p_vals} \hlkwb{<-} \hlkwd{tibble}\hldef{(}\hlkwc{bootstrap_p_vals}\hldef{=(}\hlkwd{c}\hldef{(p_closer_boot, p_further_boot, p_diff_boot)),}
+     \hlkwc{t_test_p_vals}\hldef{=}\hlkwd{c}\hldef{(p_closer_tt, p_further_tt, p_diff_tt))}
+\hldef{p_vals}
+\hldef{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? - textbf{The 5$^{th}$ percentile of the shifted resamples under the null hypothesis were approximately $-1.89$ for the closer data, $-1.46$ for the further data, and $-1.64$ for the difference data.}
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+  \hldef{t05_closer_boot}  \hlkwb{<-} \hlkwd{quantile}\hldef{(closer.resamples}\hlopt{$}\hldef{t.stat,}  \hlkwc{probs} \hldef{=} \hlnum{0.05}\hldef{)}
+\hldef{t05_further_boot} \hlkwb{<-} \hlkwd{quantile}\hldef{(further.resamples}\hlopt{$}\hldef{t.stat,} \hlkwc{probs} \hldef{=} \hlnum{0.05}\hldef{)}
+\hldef{t05_diff_boot}    \hlkwb{<-} \hlkwd{quantile}\hldef{(diff.resamples}\hlopt{$}\hldef{t.stat,}    \hlkwc{probs} \hldef{=} \hlnum{0.05}\hldef{)}
+
+\hlcom{# Compute theoretical t critical values at alpha = 0.05 (left tail)}
+\hldef{t05_closer_theo}  \hlkwb{<-} \hlkwd{qt}\hldef{(}\hlnum{0.05}\hldef{,} \hlkwc{df} \hldef{= n.closer} \hlopt{-} \hlnum{1}\hldef{)}
+\hldef{t05_further_theo} \hlkwb{<-} \hlkwd{qt}\hldef{(}\hlnum{0.05}\hldef{,} \hlkwc{df} \hldef{= n.further} \hlopt{-} \hlnum{1}\hldef{)}
+\hldef{t05_diff_theo}    \hlkwb{<-} \hlkwd{qt}\hldef{(}\hlnum{0.05}\hldef{,} \hlkwc{df} \hldef{= n.diff}    \hlopt{-} \hlnum{1}\hldef{)}
+
+\hldef{t05_closer_boot}
+\end{alltt}
+\begin{verbatim}
+##        5% 
+## -1.845572
+\end{verbatim}
+\begin{alltt}
+\hldef{t05_further_boot}
+\end{alltt}
+\begin{verbatim}
+##        5% 
+## -1.501745
+\end{verbatim}
+\begin{alltt}
+\hldef{t05_diff_boot}
+\end{alltt}
+\begin{verbatim}
+##        5% 
+## -1.466198
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
   Note this value approximates $t_{0.05, n-1}$. Compare these values in each case.
   \item Compute the bootstrap confidence intervals using the resamples. How do these 
-  compare to the $t$-test confidence intervals?
+  compare to the $t$-test confidence intervals? - \textbf{As displayed within the tibble below, all of the bootstrapped confidence intervals and the t-text intervals were within two decimal places of one another.}
+\begin{knitrout}\scriptsize
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{sd.further} \hlkwb{=} \hlkwd{sd}\hldef{(further)}
+\hldef{sd.diff} \hlkwb{=} \hlkwd{sd}\hldef{(difference)}
+\hldef{probs} \hlkwb{<-} \hlkwd{c}\hldef{(}\hlnum{0.025}\hldef{,} \hlnum{0.975}\hldef{)}
+\hldef{q_closer}        \hlkwb{<-} \hlkwd{quantile}\hldef{(closer.resamples}\hlopt{$}\hldef{t.stat,}  \hlkwc{probs} \hldef{= probs)}
+\hldef{ci_closer_boot}  \hlkwb{<-} \hlkwd{c}\hldef{(}
+  \hlkwd{mean}\hldef{(closer)} \hlopt{-} \hldef{q_closer[}\hlnum{2}\hldef{]} \hlopt{*} \hldef{(s.closer} \hlopt{/} \hlkwd{sqrt}\hldef{(n.closer)),}
+  \hlkwd{mean}\hldef{(closer)} \hlopt{-} \hldef{q_closer[}\hlnum{1}\hldef{]} \hlopt{*} \hldef{(s.closer} \hlopt{/} \hlkwd{sqrt}\hldef{(n.closer))}
+\hldef{)}
+\hldef{tci_closer}      \hlkwb{<-} \hlkwd{t.test}\hldef{(closer,}  \hlkwc{conf.level} \hldef{=} \hlnum{0.95}\hldef{)}\hlopt{$}\hldef{conf.int}
+
+\hlcom{# 2. Further data}
+\hldef{q_further}        \hlkwb{<-} \hlkwd{quantile}\hldef{(further.resamples}\hlopt{$}\hldef{t.stat,} \hlkwc{probs} \hldef{= probs)}
+\hldef{ci_further_boot}  \hlkwb{<-} \hlkwd{c}\hldef{(}
+  \hlkwd{mean}\hldef{(further)} \hlopt{-} \hldef{q_further[}\hlnum{2}\hldef{]} \hlopt{*} \hldef{(sd.further} \hlopt{/} \hlkwd{sqrt}\hldef{(n.further)),}
+  \hlkwd{mean}\hldef{(further)} \hlopt{-} \hldef{q_further[}\hlnum{1}\hldef{]} \hlopt{*} \hldef{(sd.further} \hlopt{/} \hlkwd{sqrt}\hldef{(n.further))}
+\hldef{)}
+\hldef{tci_further}      \hlkwb{<-} \hlkwd{t.test}\hldef{(further,} \hlkwc{conf.level} \hldef{=} \hlnum{0.95}\hldef{)}\hlopt{$}\hldef{conf.int}
+
+\hlcom{# 3. Difference data}
+\hldef{q_diff}           \hlkwb{<-} \hlkwd{quantile}\hldef{(diff.resamples}\hlopt{$}\hldef{t.stat,}    \hlkwc{probs} \hldef{= probs)}
+\hldef{ci_diff_boot}     \hlkwb{<-} \hlkwd{c}\hldef{(}
+  \hlkwd{mean}\hldef{(difference)} \hlopt{-} \hldef{q_diff[}\hlnum{2}\hldef{]} \hlopt{*} \hldef{(sd.diff} \hlopt{/} \hlkwd{sqrt}\hldef{(n.diff)),}
+  \hlkwd{mean}\hldef{(difference)} \hlopt{-} \hldef{q_diff[}\hlnum{1}\hldef{]} \hlopt{*} \hldef{(sd.diff} \hlopt{/} \hlkwd{sqrt}\hldef{(n.diff))}
+\hldef{)}
+\hldef{tci_diff}         \hlkwb{<-} \hlkwd{t.test}\hldef{(difference,} \hlkwc{conf.level} \hldef{=} \hlnum{0.95}\hldef{)}\hlopt{$}\hldef{conf.int}
+
+\hldef{ci.tib} \hlkwb{<-} \hlkwd{tibble}\hldef{(}\hlkwc{boot_cis} \hldef{=} \hlkwd{c}\hldef{(ci_closer_boot, ci_further_boot, ci_diff_boot),}
+                 \hlkwc{t_cis} \hldef{=} \hlkwd{c}\hldef{(tci_closer, tci_further, tci_diff))}
+\hldef{ci.tib}
+\end{alltt}
+\begin{verbatim}
+## # A tibble: 6 x 2
+##   boot_cis  t_cis
+##      <dbl>  <dbl>
+## 1    0.120  0.117
+## 2    0.198  0.195
+## 3   -0.269 -0.257
+## 4   -0.156 -0.149
+## 5   -0.461 -0.446
+## 6   -0.283 -0.272
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

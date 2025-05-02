@@ -57,6 +57,7 @@ t.stat <- close.t.stat$statistic
 fZ.at.t <- dnorm(t.stat, mean = 0, sd = 1)
 
 error.val <- ((further.sum$skew)/(sqrt(n)))*(((2*t.stat^2)+1)/6)*fZ.at.t
+error.val
 @
 
   \item Compute the error for $t$ statistics from -10 to 10 and plot a line
@@ -87,7 +88,16 @@ error.df
   to solve the error formula equal to 10\% of the desired left-tail probability:
   \[0.10 \alpha  \stackrel{set}{=} \underbrace{\frac{\text{skew}}{\sqrt{n}} \frac{(2t^2+1)}{6} f_Z(t)}_{\textrm{error}},\]
   which yields
-  \[ n = \left(\frac{\text{skew}}{6(0.10\alpha)} (2t^2 + 1) f_Z(t)\right)^2.\]
+  \[ n = \left(\frac{\text{skew}}{6(0.10\alpha)} (2t^2 + 1) f_Z(t)\right)^2.\] - \textbf{to have a tail probability within 10\% of the desired
+  $\alpha=0.05$, we would need a tail-probability of $3.26e-07$.}
+<<size = "scriptsize">>=
+alpha = 0.05
+assumed.t <- abs(qnorm(alpha))
+assumed.fz <- dnorm(assumed.t)
+skew.t <-
+  tail.prob <- (((skew.further)/6*(0.10*alpha))*((2*assumed.t^2)+1)*assumed.fz)^2
+tail.prob
+@
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -107,12 +117,124 @@ sampling distribution of the $T$ statistic:
   resamples shifted to ensure they are consistent with the null hypotheses at the average 
   (i.e., here ensure the shifted resamples are 0 on average, corresponding
   to $t=0$, for each case). 
+  <<size="scriptsize">>=
+closer <- finch.data$closer
+
+n.closer <- length(closer)        
+s.closer <- sd(closer)
+mu.obs      <- mean(closer)
+
+R = 1000
+set.seed(42)
+
+closer.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, R))
+further <- finch.data$further
+difference <- further - closer
+
+
+further.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, R))
+diff.resamples <- tibble(xbar = rep(NA, R), sd = rep(NA, R), t.stat = rep(NA, R))
+#Generate null bootstrap T-stats
+ for (i in 1:R) {
+  x.star   <- sample(closer, size = n.closer, replace = TRUE)
+  closer.resamples$xbar[i] <- mean(x.star)
+  closer.resamples$sd[i] <- sd(x.star)
+  closer.resamples$t.stat[i] <- (closer.resamples$xbar[i]-mu.obs) / (closer.resamples$sd[i] / sqrt(n.closer))
+ }
+@
   \item Compute the bootstrap $p$-value for each test using the shifted resamples. 
-  How do these compare to the $t$-test $p$-values?
-    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? 
+  How do these compare to the $t$-test $p$-values? - \textbf{The p-values recorded from preforming t-tests for the closer and difference data yielded were very small while the value for the further data was quite high, which makes sense as we are evaluating the left tail of the data. Furthermore, all of the bootstrapped p-values were recorded as $0$, suggesting that either these values were very small or their measurements were inaccurate.}
+  <<size="scriptsize">>=
+
+
+# observed T‑statistics
+t_closer    <- t.test(closer, mu = 0, alternative = "less")$statistic
+p_closer_tt <- t.test(closer, mu = 0, alternative = "less")$p.value
+
+t_further    <- t.test(further, mu = 0, alternative = "less")$statistic
+p_further_tt <- t.test(further, mu = 0, alternative = "less")$p.value
+
+t_diff      <- t.test(difference, mu = 0, alternative = "less")$statistic
+p_diff_tt   <- t.test(difference, mu = 0, alternative = "less")$p.value
+
+#Bootstrap T-stats for further and difference vals 
+n.further = length(further)
+n.diff = length(difference)
+mu.further = mean(further)
+mu.diff = mean(difference)
+
+for (i in 1:R) {
+  x.star   <- sample(further, size = n.further, replace = TRUE)
+  further.resamples$xbar[i] <- mean(x.star)
+  further.resamples$sd[i] <- sd(x.star)
+  further.resamples$t.stat[i] <- (further.resamples$xbar[i]-mu.further) / (further.resamples$sd[i] / sqrt(n.further))
+}
+
+for (i in 1:R) {
+  x.star   <- sample(difference, size = n.diff, replace = TRUE)
+  diff.resamples$xbar[i] <- mean(x.star)
+  diff.resamples$sd[i] <- sd(x.star)
+  diff.resamples$t.stat[i] <- (diff.resamples$xbar[i]-mu.diff) / (diff.resamples$sd[i] / sqrt(n.diff))
+
+  p_closer_boot  <- mean(abs(closer.resamples$t.stat)  >= abs(t_closer))
+p_further_boot <- mean(abs(further.resamples$t.stat) >= abs(t_further))
+p_diff_boot    <- mean(abs(diff.resamples$t.stat)    >= abs(t_diff))
+
+p_vals <- tibble(bootstrap_p_vals=(c(p_closer_boot, p_further_boot, p_diff_boot)),
+       t_test_p_vals=c(p_closer_tt, p_further_tt, p_diff_tt))  
+p_vals
+}
+@
+    \item What is the 5$^{th}$ percentile of the shifted resamples under the null hypothesis? - textbf{The 5$^{th}$ percentile of the shifted resamples under the null hypothesis were approximately $-1.89$ for the closer data, $-1.46$ for the further data, and $-1.64$ for the difference data.}
+<<size="scriptsize">>=
+  t05_closer_boot  <- quantile(closer.resamples$t.stat,  probs = 0.05)
+t05_further_boot <- quantile(further.resamples$t.stat, probs = 0.05)
+t05_diff_boot    <- quantile(diff.resamples$t.stat,    probs = 0.05)
+
+# Compute theoretical t critical values at alpha = 0.05 (left tail)
+t05_closer_theo  <- qt(0.05, df = n.closer - 1)
+t05_further_theo <- qt(0.05, df = n.further - 1)
+t05_diff_theo    <- qt(0.05, df = n.diff    - 1)
+
+t05_closer_boot
+t05_further_boot
+t05_diff_boot
+@
+
   Note this value approximates $t_{0.05, n-1}$. Compare these values in each case.
   \item Compute the bootstrap confidence intervals using the resamples. How do these 
-  compare to the $t$-test confidence intervals?
+  compare to the $t$-test confidence intervals? - \textbf{As displayed within the tibble below, all of the bootstrapped confidence intervals and the t-text intervals were within two decimal places of one another.}
+<<size="scriptsize">>=  
+sd.further = sd(further)
+sd.diff = sd(difference)
+probs <- c(0.025, 0.975)
+q_closer        <- quantile(closer.resamples$t.stat,  probs = probs)
+ci_closer_boot  <- c(
+  mean(closer) - q_closer[2] * (s.closer / sqrt(n.closer)),
+  mean(closer) - q_closer[1] * (s.closer / sqrt(n.closer))
+)
+tci_closer      <- t.test(closer,  conf.level = 0.95)$conf.int
+
+# 2. Further data
+q_further        <- quantile(further.resamples$t.stat, probs = probs)
+ci_further_boot  <- c(
+  mean(further) - q_further[2] * (sd.further / sqrt(n.further)),
+  mean(further) - q_further[1] * (sd.further / sqrt(n.further))
+)
+tci_further      <- t.test(further, conf.level = 0.95)$conf.int
+
+# 3. Difference data
+q_diff           <- quantile(diff.resamples$t.stat,    probs = probs)
+ci_diff_boot     <- c(
+  mean(difference) - q_diff[2] * (sd.diff / sqrt(n.diff)),
+  mean(difference) - q_diff[1] * (sd.diff / sqrt(n.diff))
+)
+tci_diff         <- t.test(difference, conf.level = 0.95)$conf.int
+
+ci.tib <- tibble(boot_cis = c(ci_closer_boot, ci_further_boot, ci_diff_boot),
+                 t_cis = c(tci_closer, tci_further, tci_diff))
+ci.tib
+@
 \end{enumerate}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
